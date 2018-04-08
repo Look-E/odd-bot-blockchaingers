@@ -17,7 +17,7 @@ Option 1: 'Game Mode' through webinterface / blender
 python simpleserver.py
 python world_websock.py
 
-Activate the simulation by visiting http://engine.finance/present/visualize2.html
+Activate the simulation by visiting http://odd.bot/visualize2.html
 Open blender file and activate game mode
 
 Option 2: 'Robot design mode' through spyder ide
