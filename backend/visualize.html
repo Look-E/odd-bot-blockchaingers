@@ -1,0 +1,313 @@
+<html>
+<head>
+    <script src="https://aframe.io/releases/0.8.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-event-set-component@^4.0.0/dist/aframe-event-set-component.min.js"></script>
+    <script src="https://unpkg.com/aframe-text-geometry-component@^0.5.0/dist/aframe-text-geometry-component.min.js"></script>
+</head>
+<style>
+    #messagebox {
+        position: absolute;
+        right: 30px;
+        top: 30px;
+        width: 300px;
+        bottom: 30px;
+        padding: 20px;
+        background-color: #586e7580;
+        border-color: rgba(0, 0, 0, 0.7);
+        border-style: none;
+        border-width: 1px;
+        border-radius: 10px;
+        border-width: 1px;
+        box-shadow: 5px 10px 18px #888888;
+        font-family: sans-serif;
+    }
+
+    #controls {
+        position: absolute;
+        left: 30px;
+        top: 30px;
+        width: 300px;/
+        /*bottom: 30px;*/
+        padding: 20px;
+        background-color: #8b7c6980;
+        border-radius: 10px;
+        box-shadow: 5px 10px 18px #888888;
+        font-family: sans-serif;
+        color: white;
+    }
+</style>
+<script>
+    AFRAME.registerComponent('updater', {
+        schema: {
+            // bar: {type: 'number'},
+            // baz: {type: 'string'}
+        },
+        init: function () {
+            this.ws_onmessage = this.ws_onmessage.bind(this);
+
+            console.log('inited')
+            var ws = new WebSocket("ws://localhost:5678/");
+            // ,
+            // messages = document.createElement('ul');
+            ws.onmessage = this.ws_onmessage;
+            window.ws = ws;
+            this.robots = [];
+        },
+
+        update: function () {
+            // Do something when component's data is updated.
+        },
+
+        remove: function () {
+            // Do something the component or its entity is detached.
+        },
+
+        tick: function (time, timeDelta) {
+            TWEEN.update(time)
+        },
+        ws_onmessage: function (event) {
+            var idx = 0;
+            for (var dat of JSON.parse(event.data)) {
+                //console.log(dat);
+
+                if (idx == this.robots.length) {
+
+                    var entityEl = document.createElement('a-entity');
+                    entityEl.setAttribute('id', `target-${idx}`);
+                    entityEl.setAttribute('position', {
+                        x: dat.x_trg,
+                        y: dat.y_trg,
+                        z: 0
+                    })
+
+                    var radEntityEl = document.createElement('a-entity');
+                    radEntityEl.setAttribute('text', {
+                        color: 'green',
+                        align: 'center',
+                        value: '' + idx,
+                        width: 8.0,
+                        side: 'double'
+                    })
+                    // radEntityEl.setAttribute('rotation', {
+                    entityEl.appendChild(radEntityEl)
+
+                    var radEntityEl = document.createElement('a-circle');
+                    radEntityEl.setAttribute('radius', 0.2)
+                    // radEntityEl.setAttribute('rotation', {
+                    entityEl.appendChild(radEntityEl)
+
+                    this.el.appendChild(entityEl);
+
+
+                    var entityEl = document.createElement('a-entity');
+                    entityEl.setAttribute('id', `robot-${idx}`);
+
+
+                    var radEntityEl = document.createElement('a-entity');
+                    radEntityEl.setAttribute('id', `text-${idx}`);
+                    radEntityEl.setAttribute('text', {
+                        color: 'red',
+                        align: 'center',
+                        value: '' + idx,
+                        width: 8.0,
+                        side: 'double'
+                    })
+                    radEntityEl.setAttribute('position', {
+                        x: 0,
+                        y: 0,
+                        z: 1
+                    })
+                    radEntityEl.setAttribute('rotation', {
+                        x: 90,
+                        y: 0,
+                        z: 0
+                    })
+                    entityEl.appendChild(radEntityEl)
+
+                    var radEntityEl = document.createElement('a-torus');
+                    radEntityEl.setAttribute('id', `torus-${idx}`);
+                    radEntityEl.setAttribute('material', {
+                        color: 'lightblue',
+                        opacity: 0.5
+                    })
+                    radEntityEl.setAttribute('radius', dat.radius / 2)
+                    radEntityEl.setAttribute('radius-tubular', dat.radius / 20)
+                    entityEl.appendChild(radEntityEl)
+
+                    var tween = new TWEEN.Tween({
+                        t: 0,
+                        scale: 1
+                    });
+                    tween.to({
+                        t: 1.0,
+                        scale: 1.5
+                    }, 1000);
+                    tween.onUpdate(function (radEntityEl) {
+                        return function () {
+                            radEntityEl.setAttribute('scale', {
+                                x: this.scale,
+                                y: this.scale,
+                                z: this.scale
+                            })
+                        }
+                    }(radEntityEl))
+                    tween.delay(Math.floor(Math.random() * Math.floor(1000)));
+                    tween.repeat(Infinity);
+                    tween.start()
+
+                    var subentityEl = document.createElement('a-entity');
+                    subentityEl.setAttribute('gltf-model', '#robot');
+                    subentityEl.setAttribute('scale', '0.10 0.10 0.10')
+                    subentityEl.setAttribute('rotation', {x: -90, y: 0, z: 180})
+                    entityEl.appendChild(subentityEl)
+                    this.el.appendChild(entityEl);
+                    this.robots.push(`robot-${idx}`)
+                }
+                else {
+                    var entityEl = document.getElementById(`robot-${idx}`);
+                    var radEntityEl = document.getElementById(`torus-${idx}`);
+                }
+
+                if (dat.radius == 0) {
+                    radEntityEl.setAttribute('radius', 0.2)
+                    radEntityEl.setAttribute('radius-tubular', 0.01)
+                }
+                else {
+                    radEntityEl.setAttribute('visible', true)
+                    radEntityEl.setAttribute('radius', dat.radius / 2)
+                    radEntityEl.setAttribute('radius-tubular', dat.radius / 20)
+
+                }
+                var v = new THREE.Vector2(dat.v, dat.u);
+                entityEl.setAttribute('rotation', {x: 0, y: 0, z: -THREE.Math.radToDeg(v.angle())})
+
+                var textEntityEl = document.getElementById(`text-${idx}`);
+                textEntityEl.setAttribute('rotation', {x: 0, y: 0, z: THREE.Math.radToDeg(v.angle())})
+
+
+                var targetEntityEl = document.getElementById(`target-${idx}`);
+                targetEntityEl.setAttribute('position', {
+                    x: dat.x_trg / 10.0 - 3,
+                    y: dat.y_trg / 10.0 - 3,
+                    z: 0.01
+                })
+
+                entityEl.setAttribute('position',
+                    {x: dat.x / 10.0 - 3, y: dat.y / 10.0 - 3, z: 0})
+                idx++;
+                //console.log(dat)
+            }
+        }
+    });
+
+
+    AFRAME.registerComponent('draggable', {
+        schema: {
+            // bar: {type: 'number'},
+            // baz: {type: 'string'}
+        },
+
+        init: function () {
+            console.log('inited')
+        },
+
+        update: function () {
+            // Do something when component's data is updated.
+            this.mouseenter = this.mouseenter.bind(this);
+            this.mouseleave = this.mouseleave.bind(this);
+            this.mousemove = this.mousemove.bind(this);
+
+            this.el.addEventListener('mouseenter', this.mouseenter)
+            this.el.addEventListener('mouseleave', this.mouseleave)
+            this.el.addEventListener('mousemove', this.mousemove)
+
+        },
+
+        remove: function () {
+            // Do something the component or its entity is detached.
+        },
+
+        tick: function (time, timeDelta) {
+            // Do something on every scene tick or frame.
+        },
+        mouseenter: function () {
+            this.selected = true;
+            // console.log('enter')
+        },
+        mouseleave: function () {
+            this.selected = false;
+            // console.log('leave')
+        },
+        mousemove: function (event) {
+            console.log(event)
+        },
+    });
+    function onUpdate() {
+        var settings = {'simplebot':{'speed':1.0,'reward':1.0,'penalty':1.0}};
+        settings.simplebot.speed = document.getElementById("speed").value;
+        settings.simplebot.reward = document.getElementById("reward").value;
+        settings.simplebot.penalty = document.getElementById("penalty").value;
+
+        window.ws.send(JSON.stringify(settings))
+    }
+
+</script>
+<body>
+<a-scene vr-mode-ui="enabled: false">
+    <a-assets>
+        <a-asset-item id="box" src="objects/box/box.gltf"></a-asset-item>
+        <a-asset-item id="van" src="objects/van/scene.gltf"></a-asset-item>
+        <a-asset-item id="plane" src="objects/plane/scene.gltf"></a-asset-item>
+        <a-asset-item id="industrial" src="objects/industrial/scene.gltf"></a-asset-item>
+        <a-asset-item id="man" src="objects/man/scene.gltf"></a-asset-item>
+        <a-asset-item id="robot" src="objects/robot/scene.gltf"></a-asset-item>
+        <a-asset-item id="optimerBoldFont"
+                      src="https://rawgit.com/mrdoob/three.js/dev/examples/fonts/optimer_bold.typeface.json"></a-asset-item>
+
+        <a-mixin id="robot" gltf-model="#robot"></a-mixin>
+    </a-assets>
+
+
+    <a-entity position="0 3.2 -6">
+        <a-entity rotation="-30 0 0" updater>
+            <a-plane color="#607D8B" height="10" width="10"></a-plane>
+
+            <!--<a-entity gltf-model="#robot" scale="0.10 0.10 0.10" rotation="-90 0 180" position="-1 -1 0"-->
+            <!--event-set__enter="_event: mouseenter; scale: 0.15 0.15 0.15;"-->
+            <!--event-set__leave="_event: mouseleave; scale: 0.10 0.10 0.10;"-->
+            <!--draggable>-->
+
+        </a-entity>
+    </a-entity>
+</a-scene>
+
+<a-camera look-controls-enabled="false" wasd-controls-enabled="false">
+    <a-entity cursor="rayOrigin: mouse"></a-entity>
+</a-camera>
+
+<!--<a-entity id="productlabel" position="-4 1 -5" visible="false"-->
+<!--text="color: red; align: center; value: Demand; width: 8.0">-->
+<!--</a-entity>-->
+
+
+</a-scene>
+<!--<div id="messagebox">-->
+    <!--Transactions-->
+<!--</div>-->
+<div id="controls">
+    <div style="float: none">
+    <span >Speed</span>
+    <input style="float: right" id="speed" type="text" name="parameters" value="1.0" onchange="onUpdate()">
+    </div>
+
+    <div style="display: inline-block; width: 100%">
+    <span>Reward</span>
+    <input style="float: right" id="reward" type="text" name="parameters" value="1.0" onchange="onUpdate()">
+    </div>
+
+    <div>
+    <span>Penalty</span>
+    <input style="float: right" id="penalty" type="text" name="parameters" value="1.0" onchange="onUpdate()">
+    </div>
+</body>
+</html>
