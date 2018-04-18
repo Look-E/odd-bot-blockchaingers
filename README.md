@@ -12,13 +12,16 @@ sudo apt install ffmpeg
 
 *** How to run: ***
 
-Option 1: 'Game Mode' through webinterface / blender
+Option 1: 'Game Mode' through webinterface. 
 
 python simpleserver.py
 python world_websock.py
 
 Activate the simulation by visiting http://odd.bot/visualize2.html
 Open blender file and activate game mode
+
+Blender generated renderings are available at:
+https://drive.google.com/drive/folders/1_AG-v-3_jb6v_AGhPbTTjPg6obp4lAkG
 
 Option 2: 'Robot design mode' through spyder ide
 
