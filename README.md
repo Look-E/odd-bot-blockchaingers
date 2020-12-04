@@ -1,3 +1,5 @@
+Video explaining the set-up https://www.youtube.com/watch?v=0CQv1Oq1ZQA
+
 Odd.Bot simulation environment created for the Blockchaingers Hackathon 2018 (Grunning)
 
 *** Works on Ubuntu linux with: ***
